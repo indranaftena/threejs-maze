@@ -1,0 +1,73 @@
+body {
+  margin: 0px;
+}
+
+canvas {
+  position: fixed;
+  z-index: 0;
+  top: 0;
+  left: 0;
+}
+
+.control {
+  position: absolute;
+  width: 100vw;
+  display: grid;
+  grid-template-columns: 2vw auto 2vw;
+  z-index: 99;
+}
+
+#left {
+  background-color: rgba(100, 100, 100, 0.5);
+  height: 100vh;
+  display: flex;
+  grid-column-start: 1;
+  grid-column-end: 2;
+  color: white;
+}
+
+#right {
+  background-color: rgba(100, 100, 100, 0.5);
+  height: 100vh;
+  display: flex;
+  grid-column-start: 3;
+  grid-column-end: 4;
+  color: white;
+}
+
+#map-padding {
+  padding: 2rem;
+  position: absolute;
+  right: 2vw;
+  top: 0px;
+  z-index: 0;
+}
+
+#map-circle {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  overflow: hidden;
+  border-radius: 50%;
+  border: 2px solid white;
+}
+
+#map {
+  position: absolute;
+}
+
+#map-helper {
+  position: block;
+  width: 100%;
+  height: 100%;
+}
+
+#timer {
+  position: absolute;
+  padding: 2rem;
+  right: 2vw;
+  bottom: 0px;
+  font-size: 3em;
+  font-family: 'Courier New', Courier, monospace;
+  color: white;
+}
