@@ -57,7 +57,7 @@ scene.add(land);
 // make player object
 const TORUS_RAD = 1;
 const TORUS_TUBE = 0.5;
-const SPHERE_D = 1;
+const SPHERE_D = 0;
 const TORUS_INIT_X = -10;
 const TORUS_INIT_Y = TORUS_RAD + TORUS_TUBE;
 const TORUS_INIT_Z = 5;
@@ -119,46 +119,62 @@ function mapMovement(object) {
 }
 mapMovement(torus);
 
-// select control elements
-const leftTurn = document.getElementById('left');
-const rightTurn = document.getElementById('right');
-const centerControl = document.getElementById('center');
+// canvas control
+const canvasControl = document.getElementById('canvas-control');
+canvasControl.addEventListener('click', async () => {
+  if (!document.pointerLockElement) {
+    try {
+      await canvasControl.requestPointerLock({
+        unadjustedMovement: true,
+      });
+    } catch (error) {
+      if (error.name === 'NotSupportedError') {
+        canvasControl.requestPointerLock();
+      }
+    }
+  }
+});
 
-// mouse on center control
-let currentYRotation = torus.rotation.y;
-const angleZero = Math.atan(torus.position.y / cameraDInit);
-function objectRotate(event) {
-  const y = event.offsetY;
-  const x = event.offsetX;
+// object and camera orientation
+let angleZero = Math.asin(torus.position.y / cameraDInit);
+const maxAngle = (Math.PI / 2) - 0.2;
+const minAngle = -Math.asin((torus.geometry.parameters.radius + torus.geometry.parameters.tube) / cameraDInit);
+function objectOrientation(event) {
+  angleZero -= event.movementY * 0.01;
+  if (angleZero < maxAngle && angleZero > minAngle) {
+    camera.position.y = cameraDInit * Math.sin(angleZero) + torus.position.y;
+    cameraD = cameraDInit * Math.cos(angleZero);
+  }
+  else if (angleZero >= maxAngle) {
+    angleZero = maxAngle;
+  }
+  else if (angleZero <= minAngle) {
+    angleZero = minAngle;
+  }
 
-  const beta = ((this.offsetHeight - y) / this.offsetHeight) * Math.PI * 90 / 180;
-  camera.position.y = cameraDInit * Math.sin(beta - angleZero) + torus.position.y;
-  cameraD = cameraDInit * Math.cos(beta - angleZero);
-
-  const middleX = this.offsetWidth / 2;
-  torus.rotation.y = currentYRotation + (middleX - x) * (Math.PI * 180 / 180) / middleX
+  torus.rotation.y -= event.movementX * 0.01;
+  if (torus.rotation.y > 2 * Math.PI) {
+    torus.rotation.y -= 2 * Math.PI;
+  }
+  else if (torus.rotation.y < -2 * Math.PI) {
+    torus.rotation.y += 2 * Math.PI;
+  }
 
   cameraPosXZ(cameraD, torus);
 }
-centerControl.onmousemove = objectRotate;
 
-// mouse on side controls
-const TURN_RATE = 0.05
-let yTurn = 0;
-leftTurn.onmouseenter = () => {
-  yTurn = TURN_RATE;
-};
-leftTurn.onmouseleave = () => {
-  yTurn = 0;
-  currentYRotation = torus.rotation.y - (Math.PI * 180 / 180);
-};
-rightTurn.onmouseenter = () => {
-  yTurn = -TURN_RATE;
-};
-rightTurn.onmouseleave = () => {
-  yTurn = 0;
-  currentYRotation = torus.rotation.y + (Math.PI * 180 / 180);
+// add and remove mouse move event listener
+function lockChangeAlert() {
+  if (document.pointerLockElement === canvasControl) {
+    console.log('Pointer is locked');
+    document.addEventListener('mousemove', objectOrientation, false);
+  }
+  else {
+    console.log('Pointer is unlocked');
+    document.removeEventListener('mousemove', objectOrientation, false);
+  }
 }
+document.addEventListener('pointerlockchange', lockChangeAlert, false);
 
 // check collisions with any wall
 const initPosY = walls[0].position.y;
@@ -250,18 +266,6 @@ function animate() {
   requestAnimationFrame(animate);
 
   stats.begin();
-
-  if (yTurn !== 0) {
-    torus.rotation.y += yTurn;
-    cameraPosXZ(cameraD, torus);
-  }
-
-  if (torus.rotation.y > 2 * Math.PI) {
-    torus.rotation.y -= 2 * Math.PI;
-  }
-  else if (torus.rotation.y < -2 * Math.PI) {
-    torus.rotation.y += 2 * Math.PI;
-  }
 
   mapMovement(torus);
   timer();

@@ -14,7 +14,7 @@ canvas {
   width: 100vw;
   display: grid;
   grid-template-columns: 2vw auto 2vw;
-  z-index: 99;
+  z-index: 10;
 }
 
 #left {
@@ -33,6 +33,14 @@ canvas {
   grid-column-start: 3;
   grid-column-end: 4;
   color: white;
+}
+
+#canvas-control {
+  position: absolute;
+  z-index: 20;
+  background-color: transparent;
+  width: 100vw;
+  height: 100vh;
 }
 
 #map-padding {
