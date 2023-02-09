@@ -165,12 +165,15 @@ function objectOrientation(event) {
 
 // add and remove mouse move event listener
 function lockChangeAlert() {
+  const starter = document.getElementById('starter');
   if (document.pointerLockElement === canvasControl) {
     console.log('Pointer is locked');
+    starter.style.display = 'none';
     document.addEventListener('mousemove', objectOrientation, false);
   }
   else {
     console.log('Pointer is unlocked');
+    // starter.style.display = 'block';
     document.removeEventListener('mousemove', objectOrientation, false);
   }
 }
