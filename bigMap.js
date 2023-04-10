@@ -1,3 +1,4 @@
+
 import * as THREE from 'three';
 
 // some constants
@@ -22,7 +23,7 @@ function makeWall(wallStat) {
 }
 
 // the map
-export function mazeWalls() {
+export function bigMazeWalls() {
     const walls = [];
 
     // horizontal

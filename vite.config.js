@@ -7,7 +7,6 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, 'index.html'),
         'level/one': resolve(__dirname, 'level/one/index.html'),
-        'level/try-out': resolve(__dirname, 'level/try-out/index.html'),
       },
     },
   },

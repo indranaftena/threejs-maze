@@ -7,17 +7,8 @@ const stats = new Stats();
 stats.showPanel(0);
 document.body.appendChild(stats.dom);
 
-function boundingBoxes(objectArray) {
-  const bBoxes = [];
-
-  for (let i = 0; i < objectArray.length; i++) {
-    const bBox = new THREE.Box3();
-    bBox.setFromObject(objectArray[i]);
-    bBoxes.push(bBox);
-  }
-
-  return bBoxes;
-}
+import { mazeWalls, boundingBoxes } from './map';
+import { bigMazeWalls } from './bigMap';
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.5, 1000);
@@ -82,6 +73,52 @@ const sphere = new THREE.Sphere(new THREE.Vector3(TORUS_INIT_X, TORUS_INIT_Y, TO
 camera.position.setY(10);
 cameraPosXZ(cameraD, torus);
 
+// build maze
+const walls = bigMazeWalls();
+for (const wall of walls) {
+  scene.add(wall);
+  // console.log(wall.position, wall.geometry.parameters);
+}
+// bounding boxes
+const wallBBoxes = boundingBoxes(walls);
+
+// box helper
+// wallBBoxes.forEach(bBox => {
+//   scene.add(new THREE.Box3Helper(bBox));
+// });
+
+// map setup
+const map = document.getElementById('map');
+const mapCircle = document.getElementById('map-circle');
+const MAP_SCALE = 3;
+const MAP_ORI_WIDTH = 159;
+const MAP_ORI_HEIGHT = 159;
+const THICKNESS = walls[0].geometry.parameters.depth;
+
+const mapOriginX = 0.5 * THICKNESS * MAP_SCALE;
+const mapOriginY = 0.5 * THICKNESS * MAP_SCALE;
+const mapInitCenterX = 0.5 * mapCircle.offsetWidth;
+const mapInitCenterY = 0.5 * mapCircle.offsetHeight;
+
+map.style.width = `${MAP_ORI_WIDTH * MAP_SCALE}px`;
+map.style.height = `${MAP_ORI_HEIGHT * MAP_SCALE}px`;
+map.style.top = `${mapInitCenterY - mapOriginY}px`;
+map.style.left = `${mapInitCenterX - mapOriginX}px`;
+
+// map movement
+function mapMovement(object) {
+  const x = -Math.round(object.position.x) * MAP_SCALE;
+  const y = -Math.round(object.position.z) * MAP_SCALE;
+  map.style.transform = `translate(${x}px, ${y}px)`;
+  map.style.transformOrigin = `${mapOriginX}px ${mapOriginY}px`
+  map.style.rotate = `${object.rotation.y}rad`;
+
+  const mapHelper = document.getElementById('map-helper');
+  mapHelper.style.transformOrigin = '50% 50%';
+  mapHelper.style.rotate = `${object.rotation.y}rad`;
+}
+mapMovement(torus);
+
 // canvas control
 const canvasControl = document.getElementById('canvas-control');
 canvasControl.addEventListener('click', async () => {
@@ -143,6 +180,7 @@ function lockChangeAlert() {
 document.addEventListener('pointerlockchange', lockChangeAlert, false);
 
 // check collisions with any wall
+const initPosY = walls[0].position.y;
 function checkCollisions(bounders) {
   for (let i = 0; i < bounders.length; i++) {
     if (sphere.intersectsBox(bounders[i])) {
@@ -155,6 +193,53 @@ function checkCollisions(bounders) {
 // keyboard inputs
 // timer start?
 let timerRun = false;
+function objectMove(event) {
+  // speed
+  const walkSpeed = 1;
+  const runSpeed = 2 * walkSpeed;
+  // move sphere
+  if (event.key === 'w') {
+    sphere.center.z -= walkSpeed * Math.cos(torus.rotation.y);
+    sphere.center.x -= walkSpeed * Math.sin(torus.rotation.y);
+  }
+  else if (event.key === 'W') {
+    sphere.center.z -= runSpeed * Math.cos(torus.rotation.y);
+    sphere.center.x -= runSpeed * Math.sin(torus.rotation.y);
+  }
+  else if (event.key === 's') {
+    sphere.center.z += walkSpeed * Math.cos(torus.rotation.y);
+    sphere.center.x += walkSpeed * Math.sin(torus.rotation.y);
+  }
+  else if (event.key === 'd') {
+    sphere.center.z -= walkSpeed * Math.sin(torus.rotation.y);
+    sphere.center.x += walkSpeed * Math.cos(torus.rotation.y);
+  }
+  else if (event.key === 'a') {
+    sphere.center.z += walkSpeed * Math.sin(torus.rotation.y);
+    sphere.center.x -= walkSpeed * Math.cos(torus.rotation.y);
+  }
+
+  // test the sphere and walls
+  if (checkCollisions(wallBBoxes)) {
+    sphere.center.x = torus.position.x;
+    sphere.center.z = torus.position.z;
+  }
+  else {
+    torus.position.x = sphere.center.x;
+    torus.position.z = sphere.center.z;
+  }
+
+  cameraPosXZ(cameraD, torus);
+  // mapMovement(torus);
+
+  if (torus.position.x > ((12 * 10) + (13 * 3))) {
+    timerRun = false;
+  }
+  else if (torus.position.x > 0) {
+    timerRun = true;
+  }
+}
+document.addEventListener('keydown', objectMove);
 
 // timer
 const timerElement = document.getElementById('timer');
@@ -179,119 +264,17 @@ function timer() {
   }
 }
 
-const url = window.location.href.split('/');
-const mapLocation = `./level/${url[4]}/map.js`
-console.log(mapLocation);
+// animate function to continuously render scene
+function animate() {
+  requestAnimationFrame(animate);
 
-async function loadMap() {
-  const { mazeWalls } = await import(mapLocation);
-  // build maze
-  const walls = mazeWalls();
-  for (const wall of walls) {
-    scene.add(wall);
-  }
+  stats.begin();
 
-  // bounding boxes
-  const wallBBoxes = boundingBoxes(walls);
-
-  // box helper
-  // wallBBoxes.forEach(bBox => {
-  //   scene.add(new THREE.Box3Helper(bBox));
-  // });
-
-  // map setup
-  const map = document.getElementById('map');
-  const mapCircle = document.getElementById('map-circle');
-  const MAP_SCALE = 3;
-  const MAP_ORI_WIDTH = 159;
-  const MAP_ORI_HEIGHT = 159;
-  const THICKNESS = walls[0].geometry.parameters.depth;
-
-  const mapOriginX = 0.5 * THICKNESS * MAP_SCALE;
-  const mapOriginY = 0.5 * THICKNESS * MAP_SCALE;
-  const mapInitCenterX = 0.5 * mapCircle.offsetWidth;
-  const mapInitCenterY = 0.5 * mapCircle.offsetHeight;
-
-  map.style.width = `${MAP_ORI_WIDTH * MAP_SCALE}px`;
-  map.style.height = `${MAP_ORI_HEIGHT * MAP_SCALE}px`;
-  map.style.top = `${mapInitCenterY - mapOriginY}px`;
-  map.style.left = `${mapInitCenterX - mapOriginX}px`;
-
-  function mapMovement(object) {
-    const x = -Math.round(object.position.x) * MAP_SCALE;
-    const y = -Math.round(object.position.z) * MAP_SCALE;
-    map.style.transform = `translate(${x}px, ${y}px)`;
-    map.style.transformOrigin = `${mapOriginX}px ${mapOriginY}px`
-    map.style.rotate = `${object.rotation.y}rad`;
-
-    const mapHelper = document.getElementById('map-helper');
-    mapHelper.style.transformOrigin = '50% 50%';
-    mapHelper.style.rotate = `${object.rotation.y}rad`;
-  }
   mapMovement(torus);
+  timer();
 
-  function objectMove(event) {
-    // speed
-    const walkSpeed = 1;
-    const runSpeed = 2 * walkSpeed;
-    // move sphere
-    if (event.key === 'w') {
-      sphere.center.z -= walkSpeed * Math.cos(torus.rotation.y);
-      sphere.center.x -= walkSpeed * Math.sin(torus.rotation.y);
-    }
-    else if (event.key === 'W') {
-      sphere.center.z -= runSpeed * Math.cos(torus.rotation.y);
-      sphere.center.x -= runSpeed * Math.sin(torus.rotation.y);
-    }
-    else if (event.key === 's') {
-      sphere.center.z += walkSpeed * Math.cos(torus.rotation.y);
-      sphere.center.x += walkSpeed * Math.sin(torus.rotation.y);
-    }
-    else if (event.key === 'd') {
-      sphere.center.z -= walkSpeed * Math.sin(torus.rotation.y);
-      sphere.center.x += walkSpeed * Math.cos(torus.rotation.y);
-    }
-    else if (event.key === 'a') {
-      sphere.center.z += walkSpeed * Math.sin(torus.rotation.y);
-      sphere.center.x -= walkSpeed * Math.cos(torus.rotation.y);
-    }
+  renderer.render(scene, camera);
 
-    // test the sphere and walls
-    if (checkCollisions(wallBBoxes)) {
-      sphere.center.x = torus.position.x;
-      sphere.center.z = torus.position.z;
-    }
-    else {
-      torus.position.x = sphere.center.x;
-      torus.position.z = sphere.center.z;
-    }
-
-    cameraPosXZ(cameraD, torus);
-    // mapMovement(torus);
-
-    if (torus.position.x > ((12 * 10) + (13 * 3))) {
-      timerRun = false;
-    }
-    else if (torus.position.x > 0) {
-      timerRun = true;
-    }
-  }
-  document.addEventListener('keydown', objectMove);
-
-  // animate function to continuously render scene
-  function animate() {
-    requestAnimationFrame(animate);
-
-    stats.begin();
-
-    mapMovement(torus);
-    timer();
-
-    renderer.render(scene, camera);
-
-    stats.end();
-  }
-  animate();
-
+  stats.end();
 }
-loadMap();
+animate();
