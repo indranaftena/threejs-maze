@@ -1,5 +1,5 @@
-
 import * as THREE from 'three';
+import { MazeScene } from '../../init';
 
 // some constants
 const HEIGHT = 8;
@@ -504,3 +504,7 @@ export function bigMazeWalls() {
 
     return walls;
 }
+
+const walls = bigMazeWalls();
+const mazeScene = new MazeScene(walls, '#bg', true);
+mazeScene.animate();
