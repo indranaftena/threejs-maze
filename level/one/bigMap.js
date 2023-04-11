@@ -23,7 +23,7 @@ function makeWall(wallStat) {
 }
 
 // the map
-export function bigMazeWalls() {
+function bigMazeWalls() {
     const walls = [];
 
     // horizontal
@@ -508,3 +508,4 @@ export function bigMazeWalls() {
 const walls = bigMazeWalls();
 const mazeScene = new MazeScene(walls, '#bg', true);
 mazeScene.animate();
+// mazeScene.observation(150, 13*6);

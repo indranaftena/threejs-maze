@@ -75,3 +75,4 @@ const mazeWalls = function () {
 const walls = mazeWalls();
 const mazeScene = new MazeScene(walls, '#bg', false);
 mazeScene.animate();
+// mazeScene.observation(100, 50);

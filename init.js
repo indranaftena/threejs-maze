@@ -84,7 +84,6 @@ export function MazeScene(walls, canvas, useTimer) {
 
     /* canvas control */
     this.canvasControl = document.getElementById('canvas-control');
-    console.log(this.canvasControl);
     this.canvasControl.addEventListener('click', async () => {
         if (!document.pointerLockElement) {
             try {
@@ -197,7 +196,7 @@ export function MazeScene(walls, canvas, useTimer) {
             starter.style.display = 'none';
             document.addEventListener('mousemove', this.objectOrientation, false);
             document.addEventListener('keydown', this.objectMove, false);
-            this.playing = true; 
+            this.playing = true;
         }
         else {
             console.log('Pointer is unlocked');
@@ -241,5 +240,12 @@ export function MazeScene(walls, canvas, useTimer) {
         this.renderer.render(this.scene, this.camera);
 
         this.stats.end();
+    }
+
+    /* make maze camera view */
+    this.observation = (y, xz) => {
+        this.camera.position.set(xz, y, xz);
+        this.camera.lookAt(new THREE.Vector3(xz, 0, xz));
+        this.renderer.render(this.scene, this.camera);
     }
 }
