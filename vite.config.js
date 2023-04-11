@@ -6,8 +6,9 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
+        'level/try-out': resolve(__dirname, 'level/try-out/index.html'),
         'level/one': resolve(__dirname, 'level/one/index.html'),
-        'level/try-out': resolve(__dirname, 'level/try-out/index.html')
+        'level/two': resolve(__dirname, 'level/two/index.html'),
       },
     },
   },
