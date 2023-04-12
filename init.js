@@ -224,7 +224,9 @@ export function MazeScene(walls, canvas, useTimer = false, mapScale = 0) {
         map.style.transform = `translate(${x}px, ${y}px)`;
         map.style.transformOrigin = "0 0"
         map.style.rotate = `${object.rotation.y}rad`;
+    }
 
+    this.mapHelper = (object) => {
         mapHelper.style.transformOrigin = '50% 50%';
         mapHelper.style.rotate = `${object.rotation.y}rad`;
     }
@@ -260,6 +262,7 @@ export function MazeScene(walls, canvas, useTimer = false, mapScale = 0) {
         this.stats.begin();
 
         if (mapScale) this.mapMovement(this.torus);
+        this.mapHelper(this.torus);
 
         if (useTimer) this.timer();
 
