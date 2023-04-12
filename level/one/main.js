@@ -1,4 +1,4 @@
-import './style.css'
+import '../../style.css'
 
 import * as THREE from 'three';
 
@@ -7,7 +7,6 @@ const stats = new Stats();
 stats.showPanel(0);
 document.body.appendChild(stats.dom);
 
-import { mazeWalls, boundingBoxes } from './map';
 import { bigMazeWalls } from './bigMap';
 
 const scene = new THREE.Scene();
@@ -80,6 +79,19 @@ for (const wall of walls) {
   // console.log(wall.position, wall.geometry.parameters);
 }
 // bounding boxes
+const boundingBoxes = function (objectArray) {
+  const bBoxes = [];
+
+  for (let i = 0; i < objectArray.length; i++) {
+    const bBox = new THREE.Box3();
+    bBox.setFromObject(objectArray[i]);
+    bBoxes.push(bBox);
+    // for debugging
+    // console.log(objectArray[i].position.x, objectArray[i].position.z);
+  }
+
+  return bBoxes;
+}
 const wallBBoxes = boundingBoxes(walls);
 
 // box helper
@@ -95,13 +107,15 @@ const MAP_ORI_WIDTH = 159;
 const MAP_ORI_HEIGHT = 159;
 const THICKNESS = walls[0].geometry.parameters.depth;
 
-const mapOriginX = 0.5 * THICKNESS * MAP_SCALE;
-const mapOriginY = 0.5 * THICKNESS * MAP_SCALE;
+// const mapOriginX = 0.5 * THICKNESS * MAP_SCALE;
+// const mapOriginY = 0.5 * THICKNESS * MAP_SCALE;
+const mapOriginX = 0;
+const mapOriginY = 0;
 const mapInitCenterX = 0.5 * mapCircle.offsetWidth;
 const mapInitCenterY = 0.5 * mapCircle.offsetHeight;
 
-map.style.width = `${MAP_ORI_WIDTH * MAP_SCALE}px`;
-map.style.height = `${MAP_ORI_HEIGHT * MAP_SCALE}px`;
+map.setAttribute('width', `${MAP_ORI_WIDTH * MAP_SCALE}px`);
+map.setAttribute('height', `${MAP_ORI_HEIGHT * MAP_SCALE}px`);
 map.style.top = `${mapInitCenterY - mapOriginY}px`;
 map.style.left = `${mapInitCenterX - mapOriginX}px`;
 
@@ -263,6 +277,9 @@ function timer() {
     timerElement.innerHTML = `${minute}&nbsp;:&nbsp;${second}&nbsp;:&nbsp;${count}`;
   }
 }
+
+// axis helper
+scene.add(new THREE.AxesHelper(5));
 
 // animate function to continuously render scene
 function animate() {

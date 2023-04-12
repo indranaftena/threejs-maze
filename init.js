@@ -3,7 +3,7 @@ import * as THREE from 'three';
 
 import Stats from 'stats.js';
 
-export function MazeScene(walls, canvas, useTimer) {
+export function MazeScene(walls, canvas, useTimer = false, mapScale = 0) {
 
     /* stat */
     this.stats = new Stats();
@@ -12,6 +12,7 @@ export function MazeScene(walls, canvas, useTimer) {
 
     /* scene setup */
     this.scene = new THREE.Scene();
+    this.scene.background = new THREE.Color(0x020212);
     this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.5, 1000);
     this.renderer = new THREE.WebGL1Renderer({
         canvas: document.querySelector(canvas),
@@ -34,9 +35,9 @@ export function MazeScene(walls, canvas, useTimer) {
     }
 
     /* lighting */
-    this.pointLight = new THREE.PointLight(0xffffff);
+    this.pointLight = new THREE.PointLight(0xffffff, 0.7);
     this.pointLight.position.set(10, 30, 10);
-    this.ambientLight = new THREE.AmbientLight(0xf0f0f0);
+    this.ambientLight = new THREE.AmbientLight(0xd0d0d0);
     this.scene.add(this.pointLight, this.ambientLight);
 
     /* floor */
@@ -76,6 +77,8 @@ export function MazeScene(walls, canvas, useTimer) {
             const bBox = new THREE.Box3();
             bBox.setFromObject(objectArray[i]);
             bBoxes.push(bBox);
+            // for debugging
+            // console.log(objectArray[i].position.x, objectArray[i].position.z);
         }
 
         return bBoxes;
@@ -116,7 +119,7 @@ export function MazeScene(walls, canvas, useTimer) {
         }
         this.torus.rotation.y -= event.movementX * 0.01;
         if (this.torus.rotation.y > 2 * Math.PI) {
-            this.rotation.y -= 2 * Math.PI;
+            this.torus.rotation.y -= 2 * Math.PI;
         }
         else if (this.torus.rotation.y < -2 * Math.PI) {
             this.torus.rotation.y += 2 * Math.PI;
@@ -187,8 +190,6 @@ export function MazeScene(walls, canvas, useTimer) {
 
     /* add and remove move event listener */
     this.lockChangeAlert = () => {
-        // console.log(document.pointerLockElement);
-        // console.log(this.canvasControl);
         let tempControl = document.getElementById('canvas-control');
         const starter = document.getElementById('starter');
         if (document.pointerLockElement === tempControl) {
@@ -207,6 +208,26 @@ export function MazeScene(walls, canvas, useTimer) {
         }
     }
     document.addEventListener('pointerlockchange', this.lockChangeAlert, false);
+
+    /* mini map */
+    const map = document.getElementById('map');
+    const mapCircle = document.getElementById('map-circle');
+    const mapHelper = document.getElementById('map-helper');
+    const mapInitCenterX = 0.5 * mapCircle.offsetWidth;
+    const mapInitCenterY = 0.5 * mapCircle.offsetHeight;
+    map.style.top = `${mapInitCenterY}px`;
+    map.style.left = `${mapInitCenterX}px`;
+
+    this.mapMovement = (object) => {
+        const x = -Math.round(object.position.x * mapScale);
+        const y = -Math.round(object.position.z * mapScale);
+        map.style.transform = `translate(${x}px, ${y}px)`;
+        map.style.transformOrigin = "0 0"
+        map.style.rotate = `${object.rotation.y}rad`;
+
+        mapHelper.style.transformOrigin = '50% 50%';
+        mapHelper.style.rotate = `${object.rotation.y}rad`;
+    }
 
     /* timer */
     this.timerElement = document.getElementById('timer');
@@ -229,11 +250,16 @@ export function MazeScene(walls, canvas, useTimer) {
         }
     }
 
+    /* axis helper */
+    this.scene.add(new THREE.AxesHelper(5));
+
     /* animation function */
     this.animate = () => {
         requestAnimationFrame(this.animate);
 
         this.stats.begin();
+
+        if (mapScale) this.mapMovement(this.torus);
 
         if (useTimer) this.timer();
 

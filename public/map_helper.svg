@@ -25,8 +25,8 @@
      inkscape:document-units="px"
      showgrid="false"
      inkscape:zoom="1.4142136"
-     inkscape:cx="120.91526"
-     inkscape:cy="127.63277"
+     inkscape:cx="20.152543"
+     inkscape:cy="129.04698"
      inkscape:window-width="1366"
      inkscape:window-height="744"
      inkscape:window-x="0"
@@ -47,7 +47,7 @@
      inkscape:groupmode="layer"
      id="layer1">
     <rect
-       style="fill:#02ffff;fill-opacity:0.49774492;stroke-width:0.0809369;stroke-opacity:0.495804"
+       style="fill:#02ffff;fill-opacity:0.75056595;stroke-width:0.0809369;stroke-opacity:0.495804"
        id="rect4318"
        width="0.55856478"
        height="50.270832"
@@ -55,7 +55,7 @@
        y="2.6458285"
        rx="4.9094255e-34" />
     <rect
-       style="fill:#02ffff;fill-opacity:0.49774492;stroke-width:0.636507;stroke-opacity:0.495804"
+       style="fill:#02ffff;fill-opacity:0.75056595;stroke-width:0.636507;stroke-opacity:0.495804"
        id="rect4372"
        width="52.916668"
        height="0.52916664"
@@ -64,7 +64,7 @@
        rx="1.8161476e-33" />
     <path
        sodipodi:type="star"
-       style="fill:#02ffff;fill-opacity:0.49774492;stroke-width:1;stroke-opacity:0.495804"
+       style="fill:#02ffff;fill-opacity:0.75056595;stroke-width:1;stroke-opacity:0.495804"
        id="path897"
        inkscape:flatsided="true"
        sodipodi:sides="3"

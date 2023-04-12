@@ -32,14 +32,14 @@ body {
   overflow: hidden;
   border-radius: 50%;
   border: 2px solid white;
+  background-color: rgba(0, 0, 100, 0.4);
 }
 
-#map {
+#map-circle * {
   position: absolute;
 }
 
 #map-helper {
-  position: block;
   width: 100%;
   height: 100%;
 }
