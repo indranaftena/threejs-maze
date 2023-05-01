@@ -17,6 +17,15 @@ body {
   height: 100vh;
 }
 
+#crosshair {
+  display: none;
+  position: absolute;
+  z-index: 15;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
 #map-padding {
   padding: 2rem;
   position: absolute;
@@ -56,9 +65,21 @@ body {
 }
 
 #starter {
+  box-sizing: border-box;
   position: absolute;
-  z-index: 10;
-  padding: 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: end;
+  width: 100vw;
+  height: 100vh;
+  z-index: 25;
+  padding-bottom: 8rem;
   font-size: 3em;
   color: white;
+  background-color: rgba(70, 70, 70, 0.4);
+}
+
+#play-button {
+  padding: 2rem;
+  background-color: darkgoldenrod;
 }

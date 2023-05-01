@@ -3,7 +3,7 @@ import * as THREE from 'three';
 
 import Stats from 'stats.js';
 
-export function MazeScene(walls, canvas, useTimer = false, mapScale = 0) {
+export function MazeScene(canvas, walls, useTimer = false, mapScale = 0, floors = false, lifts = false) {
 
     /* stat */
     this.stats = new Stats();
@@ -12,8 +12,8 @@ export function MazeScene(walls, canvas, useTimer = false, mapScale = 0) {
 
     /* scene setup */
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x020212);
-    this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.5, 1000);
+    // this.scene.background = new THREE.Color(0x020212);
+    this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1.5, 1000);
     this.renderer = new THREE.WebGL1Renderer({
         canvas: document.querySelector(canvas),
     });
@@ -41,31 +41,20 @@ export function MazeScene(walls, canvas, useTimer = false, mapScale = 0) {
     this.scene.add(this.pointLight, this.ambientLight);
 
     /* floor */
-    this.land = new THREE.Mesh(
-        new THREE.CircleGeometry(150, 20),
-        new THREE.MeshBasicMaterial({ color: 0x222200 })
-    );
-    this.land.rotation.x = -Math.PI / 2;
-    this.posy = 6 * (10 + 3);
-    this.land.position.set(this.posy, 0, this.posy);
-    this.scene.add(this.land);
-
-    /* torus player object */
-    this.TORUS_RAD = 1;
-    this.TORUS_TUBE = 0.5;
-    this.torus = new THREE.Mesh(
-        new THREE.TorusGeometry(this.TORUS_RAD, this.TORUS_TUBE, 8, 50),
-        new THREE.MeshStandardMaterial({ color: 0x0040FF })
-    );
-    this.torus.position.set(-10, this.TORUS_RAD + this.TORUS_TUBE, 5);
-    this.scene.add(this.torus);
-    this.torusSphere = new THREE.Sphere(
-        new THREE.Vector3(-10, this.TORUS_RAD + this.TORUS_TUBE, 5),
-        1.5
-    );
-    /* camera position from torus */
-    this.camera.position.setY(10);
-    this.cameraPosXZ(this.cameraD, this.torus);
+    // this.land = new THREE.Mesh(
+    //     new THREE.CircleGeometry(150, 20),
+    //     new THREE.MeshBasicMaterial({ color: 0x222200 })
+    // );
+    // this.land.rotation.x = -Math.PI / 2;
+    // this.posy = 6 * (10 + 3);
+    // this.land.position.set(this.posy, 0, this.posy);
+    // this.scene.add(this.land);
+    this.minY = 0
+    if (floors) {
+        this.scene.add(...floors);
+        this.minY = floors[0].geometry.parameters.height;
+        // console.log(this.minY);
+    }
 
     /* build maze */
     this.scene.add(...walls);
@@ -85,9 +74,46 @@ export function MazeScene(walls, canvas, useTimer = false, mapScale = 0) {
     }
     this.wallBBoxes = this.boundingBoxes(walls);
 
+    /* lifts */
+    if (lifts) this.scene.add(...lifts);
+    this.liftBBoxes = this.boundingBoxes(lifts);
+
+    /* torus player object */
+    this.TORUS_RAD = 1;
+    this.TORUS_TUBE = 0.5;
+    this.TORUS_OUTER = this.TORUS_RAD + this.TORUS_TUBE;
+    this.torus = new THREE.Mesh(
+        new THREE.TorusGeometry(this.TORUS_RAD, this.TORUS_TUBE, 8, 50),
+        new THREE.MeshStandardMaterial({ color: 0x0040FF })
+    );
+    this.torus.position.set(-10, this.minY + this.TORUS_RAD + this.TORUS_TUBE, 5);
+    this.scene.add(this.torus);
+    this.minBox = new THREE.Vector3().addVectors(
+        this.torus.position,
+        new THREE.Vector3(
+            -this.TORUS_OUTER,
+            -this.TORUS_OUTER,
+            -this.TORUS_OUTER
+        )
+    )
+    this.maxBox = new THREE.Vector3().addVectors(
+        this.torus.position,
+        new THREE.Vector3(
+            this.TORUS_OUTER,
+            this.TORUS_OUTER,
+            this.TORUS_OUTER
+        )
+    )
+    this.torusBox = new THREE.Box3(this.minBox, this.maxBox);
+    console.log(this.torusBox);
+    /* camera position from torus */
+    this.camera.position.setY(10);
+    this.cameraPosXZ(this.cameraD, this.torus);
+
     /* canvas control */
     this.canvasControl = document.getElementById('canvas-control');
-    this.canvasControl.addEventListener('click', async () => {
+    this.playButton = document.getElementById('play-button');
+    this.playButton.addEventListener('click', async () => {
         if (!document.pointerLockElement) {
             try {
                 await this.canvasControl.requestPointerLock({
@@ -105,7 +131,7 @@ export function MazeScene(walls, canvas, useTimer = false, mapScale = 0) {
     this.angleZero = Math.asin(this.torus.position.y / this.cameraDInit);
     this.objectOrientation = (event) => {
         const maxAngle = (Math.PI / 2) - 0.2;
-        const minAngle = -Math.asin((this.TORUS_RAD + this.TORUS_TUBE) / this.cameraDInit);
+        const minAngle = -Math.asin((this.TORUS_RAD + this.TORUS_TUBE) / this.cameraDInit)*2;
         this.angleZero -= event.movementY * 0.01;
         if (this.angleZero < maxAngle && this.angleZero > minAngle) {
             this.camera.position.y = this.cameraDInit * Math.sin(this.angleZero) + this.torus.position.y;
@@ -128,6 +154,87 @@ export function MazeScene(walls, canvas, useTimer = false, mapScale = 0) {
         this.cameraPosXZ(this.cameraD, this.torus);
     }
 
+    /* click lift arrow function */
+    this.arrowsTemp = null;
+    this.activeArrowZ = 0;
+    this.moveZ = () => {
+        const floorDiff = 7;
+        if (this.arrowsTemp && this.activeArrowZ) {
+            if (this.torus.position.y < this.activeArrowZ) {
+                this.torus.position.y += floorDiff;
+                this.torusBox.min.y += floorDiff;
+                this.torusBox.max.y += floorDiff;
+                this.camera.position.y += floorDiff;
+            }
+            else {
+                this.torus.position.y -= floorDiff;
+                this.torusBox.min.y -= floorDiff;
+                this.torusBox.max.y -= floorDiff;
+                this.camera.position.y -= floorDiff;
+            }
+        }
+    }
+    this.canvasControl.addEventListener('click', this.moveZ, false);
+
+
+    /* raycaster lift's arrows */
+    this.liftRayCaster = (activeLifts) => {
+        const activeArrows = [];
+        for (let i = 0; i < activeLifts.length; i++) {
+            activeArrows.push(...activeLifts[i].children);
+        }
+
+        const raycaster = new THREE.Raycaster();
+        const pointer = new THREE.Vector2(0, 0);
+
+        raycaster.setFromCamera(pointer, this.camera);
+
+        const pointed = raycaster.intersectObjects(activeArrows);
+
+        if (pointed.length > 0) {
+            if (this.arrowsTemp) this.arrowsTemp.object.material.color.set(0x222222);
+            this.arrowsTemp = pointed[0];
+            this.arrowsTemp.object.material.color.set(0xffff00);
+            console.log(this.arrowsTemp.object.matrixWorld.elements[13]);
+            this.activeArrowZ = this.arrowsTemp.object.matrixWorld.elements[13];
+        }
+        else {
+            if (this.arrowsTemp) {
+                this.arrowsTemp.object.material.color.set(0x222222);
+                this.arrowsTemp = null;
+                this.activeArrowZ = 0;
+            }
+        }
+    }
+
+    /* check if any lift contains player object */
+    this.liftTemp = [];
+    this.crosshair = document.getElementById("crosshair");
+    this.checkContain = (object, bounders) => {
+        const activatedLifts = []
+        for (let i = 0; i < bounders.length; i++) {
+            if (bounders[i].containsBox(object)) {
+                activatedLifts.push(lifts[i]);
+            }
+        }
+        if (activatedLifts.length > 0) {
+            this.liftTemp.push(...activatedLifts);
+            for (let i = 0; i < this.liftTemp.length; i++) {
+                this.liftTemp[i].visible = true;
+            }
+            this.crosshair.style.display = "block";
+        }
+        else {
+            if (this.liftTemp.length > 0) {
+                for (let i = 0; i < this.liftTemp.length; i++) {
+                    this.liftTemp[i].visible = false;
+                }
+                this.liftTemp.length = 0;
+            }
+            this.crosshair.style.display = "none";
+        }
+    }
+
     /* check collisions with any wall */
     this.checkCollisions = function (object, bounders) {
         for (let i = 0; i < bounders.length; i++) {
@@ -145,38 +252,62 @@ export function MazeScene(walls, canvas, useTimer = false, mapScale = 0) {
     this.objectMove = (event) => {
         /* speed */
         const walkSpeed = 1;
-        const runSpeed = 2 * walkSpeed;
-        /* move sphere */
+        /* move sphere in x axis */
         if (event.key === 'w') {
-            this.torusSphere.center.z -= walkSpeed * Math.cos(this.torus.rotation.y);
-            this.torusSphere.center.x -= walkSpeed * Math.sin(this.torus.rotation.y);
-        }
-        else if (event.key === 'W') {
-            this.torusSphere.center.z -= runSpeed * Math.cos(this.torus.rotation.y);
-            this.torusSphere.center.x -= runSpeed * Math.sin(this.torus.rotation.y);
+            this.torusBox.min.x -= walkSpeed * Math.sin(this.torus.rotation.y);
+            this.torusBox.max.x -= walkSpeed * Math.sin(this.torus.rotation.y);
         }
         else if (event.key === 's') {
-            this.torusSphere.center.z += walkSpeed * Math.cos(this.torus.rotation.y);
-            this.torusSphere.center.x += walkSpeed * Math.sin(this.torus.rotation.y);
+            this.torusBox.min.x += walkSpeed * Math.sin(this.torus.rotation.y);
+            this.torusBox.max.x += walkSpeed * Math.sin(this.torus.rotation.y);
         }
         else if (event.key === 'd') {
-            this.torusSphere.center.z -= walkSpeed * Math.sin(this.torus.rotation.y);
-            this.torusSphere.center.x += walkSpeed * Math.cos(this.torus.rotation.y);
+            this.torusBox.min.x += walkSpeed * Math.cos(this.torus.rotation.y);
+            this.torusBox.max.x += walkSpeed * Math.cos(this.torus.rotation.y);
         }
         else if (event.key === 'a') {
-            this.torusSphere.center.z += walkSpeed * Math.sin(this.torus.rotation.y);
-            this.torusSphere.center.x -= walkSpeed * Math.cos(this.torus.rotation.y);
+            this.torusBox.min.x -= walkSpeed * Math.cos(this.torus.rotation.y);
+            this.torusBox.max.x -= walkSpeed * Math.cos(this.torus.rotation.y);
         }
 
         /* test the sphere and the walls */
-        if (this.checkCollisions(this.torusSphere, this.wallBBoxes)) {
-            this.torusSphere.center.x = this.torus.position.x;
-            this.torusSphere.center.z = this.torus.position.z;
+        if (this.checkCollisions(this.torusBox, this.wallBBoxes)) {
+            this.torusBox.min.x = this.torus.position.x - this.TORUS_OUTER;
+            this.torusBox.max.x = this.torus.position.x + this.TORUS_OUTER;
         }
         else {
-            this.torus.position.x = this.torusSphere.center.x;
-            this.torus.position.z = this.torusSphere.center.z;
+            this.torus.position.x = this.torusBox.min.x + this.TORUS_OUTER;
         }
+
+        /* move sphere in z axis */
+        if (event.key === 'w') {
+            this.torusBox.min.z -= walkSpeed * Math.cos(this.torus.rotation.y);
+            this.torusBox.max.z -= walkSpeed * Math.cos(this.torus.rotation.y);
+        }
+        else if (event.key === 's') {
+            this.torusBox.min.z += walkSpeed * Math.cos(this.torus.rotation.y);
+            this.torusBox.max.z += walkSpeed * Math.cos(this.torus.rotation.y);
+        }
+        else if (event.key === 'd') {
+            this.torusBox.min.z -= walkSpeed * Math.sin(this.torus.rotation.y);
+            this.torusBox.max.z -= walkSpeed * Math.sin(this.torus.rotation.y);
+        }
+        else if (event.key === 'a') {
+            this.torusBox.min.z += walkSpeed * Math.sin(this.torus.rotation.y);
+            this.torusBox.max.z += walkSpeed * Math.sin(this.torus.rotation.y);
+        }
+
+        /* test the sphere and the walls */
+        if (this.checkCollisions(this.torusBox, this.wallBBoxes)) {
+            this.torusBox.min.z = this.torus.position.z - this.TORUS_OUTER;
+            this.torusBox.max.z = this.torus.position.z + this.TORUS_OUTER;
+        }
+        else {
+            this.torus.position.z = this.torusBox.min.z + this.TORUS_OUTER;
+        }
+
+        /* test any lift activated */
+        this.checkContain(this.torusBox, this.liftBBoxes);
 
         this.cameraPosXZ(this.cameraD, this.torus);
 
@@ -201,7 +332,7 @@ export function MazeScene(walls, canvas, useTimer = false, mapScale = 0) {
         }
         else {
             console.log('Pointer is unlocked');
-            starter.style.display = 'block';
+            starter.style.display = 'flex';
             document.removeEventListener('mousemove', this.objectOrientation, false);
             document.removeEventListener('keydown', this.objectMove, false);
             this.playing = false;
@@ -253,7 +384,16 @@ export function MazeScene(walls, canvas, useTimer = false, mapScale = 0) {
     }
 
     /* axis helper */
-    this.scene.add(new THREE.AxesHelper(5));
+    // this.scene.add(new THREE.AxesHelper(5));
+
+    /* window resize handler */
+    this.onWindowResize = () => {
+        this.camera.aspect = window.innerWidth / window.innerHeight;
+        this.camera.updateProjectionMatrix();
+
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+    window.addEventListener('resize', this.onWindowResize, false);
 
     /* animation function */
     this.animate = () => {
@@ -265,6 +405,8 @@ export function MazeScene(walls, canvas, useTimer = false, mapScale = 0) {
         this.mapHelper(this.torus);
 
         if (useTimer) this.timer();
+
+        this.liftRayCaster(this.liftTemp);
 
         this.renderer.render(this.scene, this.camera);
 
