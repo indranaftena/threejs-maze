@@ -2,16 +2,16 @@ import * as THREE from 'three';
 
 export function createMazeAndMap(matrixData, params) {
     /* some constants */
-    const HEIGHT = params.mazeConstant.HEIGHT;
-    const THICKNESS = params.mazeConstant.THICKNESS;
-    const SPACE = params.mazeConstant.SPACE;
+    const HEIGHT = params.wall.HEIGHT;
+    const THICKNESS = params.wall.THICKNESS;
+    const SPACE = params.wall.SPACE;
     const POS_Y = (HEIGHT / 2) + THICKNESS;
 
     /* materials */
-    const wallMat = params.mazeConstant.WALL_MAT;
-    const floorMat = params.mazeConstant.FLOOR_MAT;
+    const wallMat = params.wall.MAT;
+    const floorMat = params.floor.MAT;
     // const floorMat = params.mazeConstant.WALL_MAT;
-    const arrowMat = params.mazeConstant.ARROW_MAT;
+    const arrowMat = params.lift.ARROW_MAT;
 
     /* geometry */
     // wall
@@ -25,38 +25,46 @@ export function createMazeAndMap(matrixData, params) {
     const bigSqrFloorGeo = new THREE.BoxGeometry(SPACE, THICKNESS, SPACE);
 
     /* lift */
-    const liftGeo = new THREE.BoxGeometry(SPACE - THICKNESS, 2 * (HEIGHT + THICKNESS), SPACE - THICKNESS);
-    const liftMat = params.mazeConstant.LIFT_MAT;
+    const liftGeo = new THREE.BoxGeometry(SPACE, 2 * (HEIGHT + THICKNESS), SPACE);
+    const liftMat = params.lift.LIFT_MAT;
     const liftDefault = new THREE.Mesh(liftGeo, liftMat);
     liftDefault.visible = false;
     const arrowGeo = new THREE.CylinderGeometry(2, 1, 0.4, 4);
     const arrowOne = new THREE.Mesh(arrowGeo, arrowMat);
-    arrowOne.rotateX(-Math.PI/2);
-    arrowOne.position.set(0, 0, THICKNESS-(SPACE/2));
+    arrowOne.rotateX(-Math.PI / 2);
+    arrowOne.position.set(0, 0, THICKNESS - (SPACE / 2));
     const arrowTwo = new THREE.Mesh(arrowGeo, arrowMat);
-    arrowTwo.rotateX(Math.PI/2);
-    arrowTwo.position.set(0, 0, (SPACE/2)-THICKNESS);
+    arrowTwo.rotateX(Math.PI / 2);
+    arrowTwo.position.set(0, 0, (SPACE / 2) - THICKNESS);
     liftDefault.add(arrowOne, arrowTwo);
 
     /* make mini map */
     const map = document.createElement("canvas");
-    const MAP_SCALE = params.mapConstant.MAP_SCALE;
+    const MAP_SCALE = params.map.SCALE;
     const MAP_ORI_WIDTH = THICKNESS + ((SPACE + THICKNESS) * (matrixData[0][0].length - 1) / 2);
     const MAP_ORI_HEIGHT = THICKNESS + ((SPACE + THICKNESS) * (matrixData[0].length - 1) / 2);
-    map.setAttribute('id', 'map');
     map.setAttribute('width', `${MAP_ORI_WIDTH * MAP_SCALE}`);
     map.setAttribute('height', `${MAP_ORI_HEIGHT * MAP_SCALE}`);
-    const ctx = map.getContext("2d");
-    ctx.fillStyle = "rgba(255, 90, 0, 0.7)";
-    const mapCircle = document.getElementById('map-circle');
-    mapCircle.insertBefore(map, mapCircle.firstChild);
+    const mapCollector = document.getElementById('map');
 
     /* construct maze walls and mini map */
     const mazeWalls = [];
     const mazeFloors = [];
     const mazeLifts = [];
 
+    let mapPerFloor, ctx;
     for (let h = 0; h < matrixData.length; h++) {
+        let mazeWallIdx;
+        if (h & 1) {
+            mazeWalls.push([]);
+            mazeWallIdx = mazeWalls.length - 1;
+
+            // make map
+            mapPerFloor = map.cloneNode();
+            mapPerFloor.setAttribute('id', `map-${(h / 2 >> 0) + 1}`);
+            mapPerFloor.style.display = "none";
+            ctx = mapPerFloor.getContext("2d");
+        }
         for (let i = 0; i < matrixData[0].length; i++) {
             for (let j = 0; j < matrixData[0][0].length; j++) {
                 const idxJ = (j / 2 >> 0);
@@ -67,27 +75,31 @@ export function createMazeAndMap(matrixData, params) {
                 const z = idxI * (SPACE + THICKNESS);
                 if (h & 1) {
                     if (matrixData[h][i][j]) {
+
                         let wall, posX, posZ;
                         if (j & 1) {
                             posX = ((SPACE / 2) + THICKNESS) + x;
                             posZ = (THICKNESS / 2) + z;
                             wall = new THREE.Mesh(horizontalWallGeo, wallMat);
+                            ctx.fillStyle = "rgba(255, 90, 0, 0.7)";
                             ctx.fillRect(MAP_SCALE * (x + THICKNESS), MAP_SCALE * z, MAP_SCALE * SPACE, MAP_SCALE * THICKNESS);
                         }
                         else if (i & 1) {
                             posX = (THICKNESS / 2) + x;
                             posZ = ((SPACE / 2) + THICKNESS) + z;
                             wall = new THREE.Mesh(verticalWallGeo, wallMat);
+                            ctx.fillStyle = "rgba(255, 90, 0, 0.7)";
                             ctx.fillRect(MAP_SCALE * x, MAP_SCALE * (z + THICKNESS), MAP_SCALE * THICKNESS, MAP_SCALE * SPACE);
                         }
                         else {
                             posX = (THICKNESS / 2) + x;
                             posZ = (THICKNESS / 2) + z;
                             wall = new THREE.Mesh(pilarWallGeo, wallMat);
+                            ctx.fillStyle = "rgba(255, 90, 0, 0.7)";
                             ctx.fillRect(MAP_SCALE * x, MAP_SCALE * z, MAP_SCALE * THICKNESS, MAP_SCALE * THICKNESS);
                         }
                         wall.position.set(posX, y + POS_Y, posZ);
-                        mazeWalls.push(wall);
+                        mazeWalls[mazeWallIdx].push(wall);
                     }
                 }
                 else {
@@ -122,11 +134,22 @@ export function createMazeAndMap(matrixData, params) {
                         const posZ = ((SPACE / 2) + THICKNESS) + z;
                         lift.position.set(posX, y + (THICKNESS / 2), posZ);
                         mazeLifts.push(lift);
+
+                        // ctx.fillStyle = "rgba(255, 255, 0, 0.4)";
+                        // ctx.fillRect(
+                        //     MAP_SCALE * (x + THICKNESS),
+                        //     MAP_SCALE * (z + THICKNESS),
+                        //     MAP_SCALE * SPACE,
+                        //     MAP_SCALE * SPACE
+                        // );
                     }
                 }
             }
         }
-
+        if (h & 1) {
+            // add map to DOM
+            mapCollector.appendChild(mapPerFloor);
+        }
     }
 
     return [mazeWalls, mazeFloors, mazeLifts];

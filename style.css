@@ -53,6 +53,15 @@ body {
   height: 100%;
 }
 
+#floor-number {
+  top: 0;
+  right: 0;
+  font-size: 2rem;
+  font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+  color: white;
+  text-align: end;
+}
+
 #timer {
   position: absolute;
   z-index: 10;

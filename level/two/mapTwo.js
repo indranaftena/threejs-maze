@@ -76,8 +76,8 @@ const mazeMatrix = [
     ],
 ];
 
-const MAP_SCALE = 3;
 const params = new Constants();
+const MAP_SCALE = params.map.SCALE;
 const [mazeWalls, mazeFloors] = createMazeAndMap(mazeMatrix, params);
 
 /* build game world */

@@ -41,23 +41,12 @@ export function MazeScene(canvas, walls, useTimer = false, mapScale = 0, floors 
     this.scene.add(this.pointLight, this.ambientLight);
 
     /* floor */
-    // this.land = new THREE.Mesh(
-    //     new THREE.CircleGeometry(150, 20),
-    //     new THREE.MeshBasicMaterial({ color: 0x222200 })
-    // );
-    // this.land.rotation.x = -Math.PI / 2;
-    // this.posy = 6 * (10 + 3);
-    // this.land.position.set(this.posy, 0, this.posy);
-    // this.scene.add(this.land);
     this.minY = 0
     if (floors) {
         this.scene.add(...floors);
         this.minY = floors[0].geometry.parameters.height;
-        // console.log(this.minY);
     }
 
-    /* build maze */
-    this.scene.add(...walls);
     /* bounding boxes */
     this.boundingBoxes = function (objectArray) {
         const bBoxes = [];
@@ -72,7 +61,16 @@ export function MazeScene(canvas, walls, useTimer = false, mapScale = 0, floors 
 
         return bBoxes;
     }
-    this.wallBBoxes = this.boundingBoxes(walls);
+
+    /* build maze */
+    this.wallBBoxes = {};
+    for (let i = 0; i < walls.length; i++) {
+        this.scene.add(...walls[i]);
+        this.wallBBoxes[i + 1] = this.boundingBoxes(walls[i]);
+    }
+
+    /* floor height */
+    this.floorDiff = this.minY + walls[0][0].geometry.parameters.height;
 
     /* lifts */
     if (lifts) this.scene.add(...lifts);
@@ -86,9 +84,9 @@ export function MazeScene(canvas, walls, useTimer = false, mapScale = 0, floors 
         new THREE.TorusGeometry(this.TORUS_RAD, this.TORUS_TUBE, 8, 50),
         new THREE.MeshStandardMaterial({ color: 0x0040FF })
     );
-    this.torus.position.set(-10, this.minY + this.TORUS_RAD + this.TORUS_TUBE, 5);
+    this.torus.position.set(-10, this.minY + this.TORUS_OUTER, 5);
     this.scene.add(this.torus);
-    this.minBox = new THREE.Vector3().addVectors(
+    this.minTorusBox = new THREE.Vector3().addVectors(
         this.torus.position,
         new THREE.Vector3(
             -this.TORUS_OUTER,
@@ -96,7 +94,7 @@ export function MazeScene(canvas, walls, useTimer = false, mapScale = 0, floors 
             -this.TORUS_OUTER
         )
     )
-    this.maxBox = new THREE.Vector3().addVectors(
+    this.maxTorusBox = new THREE.Vector3().addVectors(
         this.torus.position,
         new THREE.Vector3(
             this.TORUS_OUTER,
@@ -104,8 +102,9 @@ export function MazeScene(canvas, walls, useTimer = false, mapScale = 0, floors 
             this.TORUS_OUTER
         )
     )
-    this.torusBox = new THREE.Box3(this.minBox, this.maxBox);
-    console.log(this.torusBox);
+    this.torusBox = new THREE.Box3(this.minTorusBox, this.maxTorusBox);
+    /* torus current floor */
+    this.torusCurrentFloor = 1;
     /* camera position from torus */
     this.camera.position.setY(10);
     this.cameraPosXZ(this.cameraD, this.torus);
@@ -131,7 +130,8 @@ export function MazeScene(canvas, walls, useTimer = false, mapScale = 0, floors 
     this.angleZero = Math.asin(this.torus.position.y / this.cameraDInit);
     this.objectOrientation = (event) => {
         const maxAngle = (Math.PI / 2) - 0.2;
-        const minAngle = -Math.asin((this.TORUS_RAD + this.TORUS_TUBE) / this.cameraDInit)*2;
+        // const minAngle = -Math.asin((this.TORUS_RAD + this.TORUS_TUBE) / this.cameraDInit) * 2;
+        const minAngle = -(Math.PI / 5);
         this.angleZero -= event.movementY * 0.01;
         if (this.angleZero < maxAngle && this.angleZero > minAngle) {
             this.camera.position.y = this.cameraDInit * Math.sin(this.angleZero) + this.torus.position.y;
@@ -154,25 +154,51 @@ export function MazeScene(canvas, walls, useTimer = false, mapScale = 0, floors 
         this.cameraPosXZ(this.cameraD, this.torus);
     }
 
+    /* mini map initialization */
+    this.miniMap = document.getElementById('map-1');
+    this.miniMap.style.display = "block";
+    this.mapIndicator = document.getElementById('floor-number');
+    this.mapIndicator.innerText = `floor ${this.torusCurrentFloor}`;
+    /* mini map change if go up or down */
+    this.changeMap = (nextMap) => {
+        this.miniMap.style.display = "none";
+        this.miniMap = document.getElementById(nextMap);
+        this.miniMap.style.display = "block";
+    }
+
+    /* up or down floor function */
+    this.goUpFloor = () => {
+        this.torus.position.y += this.floorDiff;
+        this.torusBox.min.y += this.floorDiff;
+        this.torusBox.max.y += this.floorDiff;
+        this.camera.position.y += this.floorDiff;
+    }
+    this.goDownFloor = () => {
+        this.torus.position.y -= this.floorDiff;
+        this.torusBox.min.y -= this.floorDiff;
+        this.torusBox.max.y -= this.floorDiff;
+        this.camera.position.y -= this.floorDiff;
+    }
+
     /* click lift arrow function */
     this.arrowsTemp = null;
     this.activeArrowZ = 0;
     this.moveZ = () => {
-        const floorDiff = 7;
         if (this.arrowsTemp && this.activeArrowZ) {
             if (this.torus.position.y < this.activeArrowZ) {
-                this.torus.position.y += floorDiff;
-                this.torusBox.min.y += floorDiff;
-                this.torusBox.max.y += floorDiff;
-                this.camera.position.y += floorDiff;
+                this.goUpFloor();
+                this.torusCurrentFloor++;
             }
             else {
-                this.torus.position.y -= floorDiff;
-                this.torusBox.min.y -= floorDiff;
-                this.torusBox.max.y -= floorDiff;
-                this.camera.position.y -= floorDiff;
+                this.goDownFloor();
+                this.torusCurrentFloor--;
             }
+            this.changeMap(`map-${this.torusCurrentFloor}`);
+            this.mapIndicator.innerText = `floor ${this.torusCurrentFloor}`;
         }
+
+        /* test any lift activated */
+        this.checkContain(this.torusBox, this.liftBBoxes);
     }
     this.canvasControl.addEventListener('click', this.moveZ, false);
 
@@ -195,7 +221,7 @@ export function MazeScene(canvas, walls, useTimer = false, mapScale = 0, floors 
             if (this.arrowsTemp) this.arrowsTemp.object.material.color.set(0x222222);
             this.arrowsTemp = pointed[0];
             this.arrowsTemp.object.material.color.set(0xffff00);
-            console.log(this.arrowsTemp.object.matrixWorld.elements[13]);
+            // console.log(this.arrowsTemp.object.matrixWorld.elements[13]);
             this.activeArrowZ = this.arrowsTemp.object.matrixWorld.elements[13];
         }
         else {
@@ -218,7 +244,12 @@ export function MazeScene(canvas, walls, useTimer = false, mapScale = 0, floors 
             }
         }
         if (activatedLifts.length > 0) {
-            this.liftTemp.push(...activatedLifts);
+            if (this.liftTemp.length > 0) {
+                for (let i = 0; i < this.liftTemp.length; i++) {
+                    this.liftTemp[i].visible = false;
+                }
+            }
+            this.liftTemp = activatedLifts;
             for (let i = 0; i < this.liftTemp.length; i++) {
                 this.liftTemp[i].visible = true;
             }
@@ -271,7 +302,7 @@ export function MazeScene(canvas, walls, useTimer = false, mapScale = 0, floors 
         }
 
         /* test the sphere and the walls */
-        if (this.checkCollisions(this.torusBox, this.wallBBoxes)) {
+        if (this.checkCollisions(this.torusBox, this.wallBBoxes[this.torusCurrentFloor])) {
             this.torusBox.min.x = this.torus.position.x - this.TORUS_OUTER;
             this.torusBox.max.x = this.torus.position.x + this.TORUS_OUTER;
         }
@@ -298,7 +329,7 @@ export function MazeScene(canvas, walls, useTimer = false, mapScale = 0, floors 
         }
 
         /* test the sphere and the walls */
-        if (this.checkCollisions(this.torusBox, this.wallBBoxes)) {
+        if (this.checkCollisions(this.torusBox, this.wallBBoxes[this.torusCurrentFloor])) {
             this.torusBox.min.z = this.torus.position.z - this.TORUS_OUTER;
             this.torusBox.max.z = this.torus.position.z + this.TORUS_OUTER;
         }
@@ -341,20 +372,20 @@ export function MazeScene(canvas, walls, useTimer = false, mapScale = 0, floors 
     document.addEventListener('pointerlockchange', this.lockChangeAlert, false);
 
     /* mini map */
-    const map = document.getElementById('map');
+    const mapCollector = document.getElementById('map');
     const mapCircle = document.getElementById('map-circle');
     const mapHelper = document.getElementById('map-helper');
     const mapInitCenterX = 0.5 * mapCircle.offsetWidth;
     const mapInitCenterY = 0.5 * mapCircle.offsetHeight;
-    map.style.top = `${mapInitCenterY}px`;
-    map.style.left = `${mapInitCenterX}px`;
+    mapCollector.style.top = `${mapInitCenterY}px`;
+    mapCollector.style.left = `${mapInitCenterX}px`;
 
     this.mapMovement = (object) => {
         const x = -Math.round(object.position.x * mapScale);
         const y = -Math.round(object.position.z * mapScale);
-        map.style.transform = `translate(${x}px, ${y}px)`;
-        map.style.transformOrigin = "0 0"
-        map.style.rotate = `${object.rotation.y}rad`;
+        mapCollector.style.transform = `translate(${x}px, ${y}px)`;
+        mapCollector.style.transformOrigin = "0 0"
+        mapCollector.style.rotate = `${object.rotation.y}rad`;
     }
 
     this.mapHelper = (object) => {
