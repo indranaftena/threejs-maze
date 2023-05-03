@@ -508,7 +508,7 @@ export function bigMazeWalls() {
 
 const walls = bigMazeWalls();
 
-const map = document.getElementById('map');
+const map = document.getElementById('map-1');
 const MAP_SCALE = 3;
 const MAP_ORI_WIDTH = 159;
 const MAP_ORI_HEIGHT = 159;

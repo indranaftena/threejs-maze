@@ -10,7 +10,6 @@ export function createMazeAndMap(matrixData, params) {
     /* materials */
     const wallMat = params.wall.MAT;
     const floorMat = params.floor.MAT;
-    // const floorMat = params.mazeConstant.WALL_MAT;
     const arrowMat = params.lift.ARROW_MAT;
 
     /* geometry */

@@ -158,7 +158,7 @@ export function MazeScene(canvas, walls, useTimer = false, mapScale = 0, floors 
     this.miniMap = document.getElementById('map-1');
     this.miniMap.style.display = "block";
     this.mapIndicator = document.getElementById('floor-number');
-    this.mapIndicator.innerText = `floor ${this.torusCurrentFloor}`;
+    this.mapIndicator.innerText = this.torusCurrentFloor;
     /* mini map change if go up or down */
     this.changeMap = (nextMap) => {
         this.miniMap.style.display = "none";
@@ -194,7 +194,7 @@ export function MazeScene(canvas, walls, useTimer = false, mapScale = 0, floors 
                 this.torusCurrentFloor--;
             }
             this.changeMap(`map-${this.torusCurrentFloor}`);
-            this.mapIndicator.innerText = `floor ${this.torusCurrentFloor}`;
+            this.mapIndicator.innerText = this.torusCurrentFloor;
         }
 
         /* test any lift activated */
@@ -219,7 +219,7 @@ export function MazeScene(canvas, walls, useTimer = false, mapScale = 0, floors 
 
         if (pointed.length > 0) {
             if (this.arrowsTemp) this.arrowsTemp.object.material.color.set(0x222222);
-            this.arrowsTemp = pointed[0];
+            this.arrowsTemp = pointed[pointed.length - 1];
             this.arrowsTemp.object.material.color.set(0xffff00);
             // console.log(this.arrowsTemp.object.matrixWorld.elements[13]);
             this.activeArrowZ = this.arrowsTemp.object.matrixWorld.elements[13];
