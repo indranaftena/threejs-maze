@@ -10,6 +10,7 @@ export default defineConfig({
         'level/one': resolve(__dirname, 'level/one/index.html'),
         'level/two': resolve(__dirname, 'level/two/index.html'),
         'level/three': resolve(__dirname, 'level/three/index.html'),
+        'level/random': resolve(__dirname, 'level/random/index.html'),
       },
     },
   },

@@ -31,7 +31,8 @@ section.menu {
     margin: 1rem 0;
     padding: 1rem;
     background-color: #003366;
-    color: white
+    color: white;
+    text-align: center;
 }
 
 footer {

@@ -92,4 +92,5 @@ body {
 #play-button {
   padding: 2rem;
   background-color: darkgoldenrod;
+  cursor: pointer;
 }
