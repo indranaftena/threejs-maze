@@ -4,6 +4,8 @@ import { createMazeAndMap } from '../../mazeBuilder';
 import { Constants } from '../../constants';
 import { MazeGenerator } from '../../randomMazeGenerator';
 
+// document.querySelector("body").style.display = "none";
+
 const mazeGen = new MazeGenerator(1, 30, 30, [1,1,1]);
 mazeGen.generateMaze()
 const mazeMatrix = mazeGen.mazeMatrix;
@@ -13,6 +15,9 @@ const MAP_SCALE = params.map.SCALE;
 const [mazeWalls, mazeFloors, mazeLifts] = createMazeAndMap(mazeMatrix, params);
 
 /* build game world */
-const mazeScene = new MazeScene('#bg', mazeWalls, false, MAP_SCALE, mazeFloors, mazeLifts);
+const mazeScene = new MazeScene('#bg', mazeWalls, true, MAP_SCALE, mazeFloors);
+
+// document.querySelector("body").style.display = "block";
+
 mazeScene.animate();
-// mazeScene.observation(170, 100);
+// mazeScene.observation(190, 130);

@@ -19,7 +19,7 @@ export function MazeGenerator(floor = 1, verticalCell = 6, horizontalCell = 6, s
     }
     this.mazeMatrix[1][1][0] = 0;
     this.mazeMatrix[this.LAYER_N - 1][this.VERTICAL_N - 2][this.HORIZONTAL_N - 1] = 0
-    console.log('maze matrix dimension', this.mazeMatrix.length, this.mazeMatrix[0].length, this.mazeMatrix[0][0].length);
+    // console.log('maze matrix dimension', this.mazeMatrix.length, this.mazeMatrix[0].length, this.mazeMatrix[0][0].length);
 
     /* print the matrix for debugging */
     this.printMatrix = function () {
@@ -35,14 +35,9 @@ export function MazeGenerator(floor = 1, verticalCell = 6, horizontalCell = 6, s
 
     /* current position pointer */
     this.posPointer = function (posY = start[0], posZ = start[1], posX = start[2]) {
-        this.y = posY,
-            this.z = posZ,
-            this.x = posX,
-            this.set = function (y, z, x) {
-                this.y = y;
-                this.z = z;
-                this.x = x;
-            }
+        this.y = posY;
+        this.z = posZ;
+        this.x = posX;
     };
 
     /* neighbor picker */
@@ -96,7 +91,7 @@ export function MazeGenerator(floor = 1, verticalCell = 6, horizontalCell = 6, s
             return null;
         }
         else {
-            console.log('available neigbors', neighbors);
+            // console.log('available neigbors', neighbors);
 
             switch (neighbors[Math.floor(Math.random() * neighbors.length)]) {
                 case 1:
@@ -144,9 +139,9 @@ export function MazeGenerator(floor = 1, verticalCell = 6, horizontalCell = 6, s
                 currentPos = posHistory.pop();
             }
         }
-        this.printMatrix();
+        // this.printMatrix();
     }
 }
 
-const myMaze = new MazeGenerator();
-myMaze.generateMaze();
+// const myMaze = new MazeGenerator();
+// myMaze.generateMaze();

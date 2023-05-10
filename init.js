@@ -48,6 +48,7 @@ export function MazeScene(canvas, walls, useTimer = false, mapScale = 0, floors 
     }
 
     /* bounding boxes */
+    this.finishLine = 0;
     this.boundingBoxes = function (objectArray) {
         const bBoxes = [];
 
@@ -55,8 +56,9 @@ export function MazeScene(canvas, walls, useTimer = false, mapScale = 0, floors 
             const bBox = new THREE.Box3();
             bBox.setFromObject(objectArray[i]);
             bBoxes.push(bBox);
-            // for debugging
-            // console.log(objectArray[i].position.x, objectArray[i].position.z);
+            if (bBox.max.x > this.finishLine) {
+                this.finishLine = bBox.max.x;
+            }
         }
 
         return bBoxes;
@@ -280,6 +282,7 @@ export function MazeScene(canvas, walls, useTimer = false, mapScale = 0, floors 
     /* timer start? */
     this.timerRun = false;
     this.playing = false;
+    this.winning = false;
     this.objectMove = (event) => {
         /* speed */
         const walkSpeed = 1;
@@ -342,10 +345,10 @@ export function MazeScene(canvas, walls, useTimer = false, mapScale = 0, floors 
 
         this.cameraPosXZ(this.cameraD, this.torus);
 
-        if (this.torus.position.x > ((12 * 10) + (13 * 3))) {
-            this.timerRun = false;
+        if (this.torus.position.x > this.finishLine) {
+            this.winning = true;
         }
-        else if (this.torus.position.x > 0) {
+        if (this.torus.position.x > 0) {
             this.timerRun = true;
         }
     }
@@ -399,7 +402,7 @@ export function MazeScene(canvas, walls, useTimer = false, mapScale = 0, floors 
     this.minute = 0;
     this.count = 0;
     this.timer = () => {
-        if (this.timerRun && this.playing) {
+        if (this.timerRun && this.playing && !this.winning) {
             this.count++;
             if (this.count === 100) {
                 this.second++;
