@@ -1,5 +1,6 @@
 import './style.css'
 import * as THREE from 'three';
+import { Sky } from 'three/addons/objects/Sky.js';
 
 import Stats from 'stats.js';
 
@@ -35,10 +36,20 @@ export function MazeScene(canvas, maze, useTimer = false, mapScale = 0) {
     }
 
     /* lighting */
-    this.pointLight = new THREE.PointLight(0xffffff, 0.7);
-    this.pointLight.position.set(10, 30, 10);
+    this.pointLight = new THREE.PointLight(0xffffff, 1);
+    this.pointLight.position.set(10000, 1, 0);
     this.ambientLight = new THREE.AmbientLight(0xd0d0d0);
     this.scene.add(this.pointLight, this.ambientLight);
+
+    /* sky */
+    this.sky = new Sky();
+    this.sky.scale.setScalar(4500);
+    this.sky.material.uniforms.turbidity.value = 10;
+    this.sky.material.uniforms.rayleigh.value = 3;
+    this.sky.material.uniforms.mieCoefficient.value = 0.005;
+    this.sky.material.uniforms.sunPosition.value = new THREE.Vector3(50, -1, 0)
+    
+    this.scene.add(this.sky);
 
     /* floor */
     this.minY = 0
