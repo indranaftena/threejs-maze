@@ -515,6 +515,6 @@ const MAP_ORI_HEIGHT = 159;
 map.setAttribute('width', `${MAP_ORI_WIDTH * MAP_SCALE}px`);
 map.setAttribute('height', `${MAP_ORI_HEIGHT * MAP_SCALE}px`);
 
-const mazeScene = new MazeScene('#bg', [walls], true, MAP_SCALE);
+const mazeScene = new MazeScene('#bg', { walls: [walls], floors: false, lifts: false }, true, MAP_SCALE);
 mazeScene.animate();
 // mazeScene.observation(150, 13*6);

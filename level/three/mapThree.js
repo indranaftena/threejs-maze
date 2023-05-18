@@ -99,9 +99,9 @@ const mazeMatrix = [
 
 const params = new Constants();
 const MAP_SCALE = params.map.SCALE;
-const [mazeWalls, mazeFloors, mazeLifts] = createMazeAndMap(mazeMatrix, params);
+const maze = createMazeAndMap(mazeMatrix, params);
 
 /* build game world */
-const mazeScene = new MazeScene('#bg', mazeWalls, true, MAP_SCALE, mazeFloors, mazeLifts);
+const mazeScene = new MazeScene('#bg', maze, true, MAP_SCALE);
 mazeScene.animate();
 // mazeScene.observation(170, 100);

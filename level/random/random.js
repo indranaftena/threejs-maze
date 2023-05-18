@@ -12,10 +12,10 @@ const mazeMatrix = mazeGen.mazeMatrix;
 
 const params = new Constants();
 const MAP_SCALE = params.map.SCALE;
-const [mazeWalls, mazeFloors, mazeLifts] = createMazeAndMap(mazeMatrix, params);
+const maze = createMazeAndMap(mazeMatrix, params);
 
 /* build game world */
-const mazeScene = new MazeScene('#bg', mazeWalls, true, MAP_SCALE, mazeFloors);
+const mazeScene = new MazeScene('#bg', maze, true, MAP_SCALE);
 
 // document.querySelector("body").style.display = "block";
 

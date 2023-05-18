@@ -48,8 +48,8 @@ export function createMazeAndMap(matrixData, params) {
 
     /* construct maze walls and mini map */
     const mazeWalls = [];
-    const mazeFloors = [];
-    const mazeLifts = [];
+    let mazeFloors = [];
+    let mazeLifts = [];
 
     let mapPerFloor, ctx;
     for (let h = 0; h < matrixData.length; h++) {
@@ -151,5 +151,8 @@ export function createMazeAndMap(matrixData, params) {
         }
     }
 
-    return [mazeWalls, mazeFloors, mazeLifts];
+    if (mazeFloors.length === 0) mazeFloors = false;
+    if (mazeLifts.length === 0) mazeLifts = false;
+
+    return { walls: mazeWalls, floors: mazeFloors, lifts: mazeLifts };
 }
